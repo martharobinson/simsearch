@@ -7,10 +7,12 @@ from tqdm import tqdm
 from simsearch.datasets import DeepFashionDataset
 from simsearch.clip_embeddings import load_clip_mps, generate_clip_embeddings
 
+
 def custom_collate(batch):
     images = [item["image"] for item in batch]
     filenames = [item["filename"] for item in batch]
     return {"image": images, "filename": filenames}
+
 
 @click.command()
 @click.option(
@@ -44,7 +46,11 @@ def main(data_root, split, batch_size, output):
 
     dataset = DeepFashionDataset(root_dir=data_root, split=split)
     dataloader = DataLoader(
-        dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=custom_collate
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        collate_fn=custom_collate,
     )
 
     model, processor = load_clip_mps()

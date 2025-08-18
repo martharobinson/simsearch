@@ -3,7 +3,7 @@ stages:
   embed_baseline@gallery:
     cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes 
       Retrieval Benchmark" --split gallery --batch-size 32 --output 
-      data/embeddings/gallery.csv
+      data/embeddings/baseline/gallery.csv
     deps:
     - path: data/In-shop Clothes Retrieval 
         Benchmark/Eval/list_eval_partition.txt
@@ -17,8 +17,8 @@ stages:
       nfiles: 52716
     - path: scripts/embed_with_clip.py
       hash: md5
-      md5: d59ad447225fc90a793acb71da456aaf
-      size: 2157
+      md5: 83a20b0f5552c45bbef470a61692253a
+      size: 2192
     outs:
     - path: data/embeddings/baseline/gallery.csv
       hash: md5
@@ -27,7 +27,7 @@ stages:
   embed_baseline@query:
     cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes 
       Retrieval Benchmark" --split query --batch-size 32 --output 
-      data/embeddings/query.csv
+      data/embeddings/baseline/query.csv
     deps:
     - path: data/In-shop Clothes Retrieval 
         Benchmark/Eval/list_eval_partition.txt
@@ -41,10 +41,39 @@ stages:
       nfiles: 52716
     - path: scripts/embed_with_clip.py
       hash: md5
-      md5: d59ad447225fc90a793acb71da456aaf
-      size: 2157
+      md5: 83a20b0f5552c45bbef470a61692253a
+      size: 2192
     outs:
     - path: data/embeddings/baseline/query.csv
       hash: md5
       md5: cad00b562c2fb94775158ab671bca123
       size: 83668516
+  evaluate@baseline:
+    cmd: python scripts/evaluate_similiarity_search.py --eval-file "data/In-shop
+      Clothes Retrieval Benchmark/Eval/list_eval_partition.txt" 
+      --gallery-embeddings-csv data/embeddings/baseline/gallery.csv 
+      --query-embeddings-csv data/embeddings/baseline/query.csv --output-file 
+      data/results/baseline_eval.csv
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/embeddings/baseline/gallery.csv
+      hash: md5
+      md5: 8dd24544cac822912fa37110a5634a2e
+      size: 74202475
+    - path: data/embeddings/baseline/query.csv
+      hash: md5
+      md5: cad00b562c2fb94775158ab671bca123
+      size: 83668516
+    - path: scripts/evaluate_similiarity_search.py
+      hash: md5
+      md5: 1cb0bcaa99d6b08a6f10962c76bfbdd3
+      size: 4065
+    outs:
+    - path: data/results/baseline_eval.csv
+      hash: md5
+      md5: 64a233bb3a5a8729f9a947f9105b581e
+      size: 103

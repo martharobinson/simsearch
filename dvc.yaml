@@ -4,33 +4,23 @@ stages:
       - gallery
       - query
     do:
-      cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes Retrieval Benchmark" --split ${item} --batch-size 32 --output data/embeddings/${item}.csv
+      cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes Retrieval Benchmark" --split ${item} --batch-size 32 --output data/embeddings/baseline/${item}.csv
       deps:
         - scripts/embed_with_clip.py
         - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
         - data/In-shop Clothes Retrieval Benchmark/Img/
       outs:
         - data/embeddings/baseline/${item}.csv
-  evaluate_methods:
+  evaluate:
     foreach:
       - baseline
+      # Add other methods here if needed
     do:
-      cmd: |
-        python scripts/evaluate_similiarity_search.py \
-          --eval-file data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt \
-          --embeddings-csv data/embeddings/${item}/gallery.csv \
-          --split query \
-          --output-file results/${item}_gallery_eval.csv
-        python scripts/evaluate_similiarity_search.py \
-          --eval-file data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt \
-          --embeddings-csv data/embeddings/${item}/query.csv \
-          --split query \
-          --output-file results/${item}_query_eval.csv
+      cmd: python scripts/evaluate_similiarity_search.py --eval-file "data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt" --gallery-embeddings-csv data/embeddings/${item}/gallery.csv --query-embeddings-csv data/embeddings/${item}/query.csv --output-file data/results/${item}_eval.csv
       deps:
         - scripts/evaluate_similiarity_search.py
         - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
         - data/embeddings/${item}/gallery.csv
         - data/embeddings/${item}/query.csv
       outs:
-        - results/${item}_gallery_eval.csv
-        - results/${item}_query_eval.csv
+        - data/results/${item}_eval.csv

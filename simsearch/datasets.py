@@ -1,9 +1,7 @@
 import os
 from typing import Optional, Callable, Dict, Any
 from PIL import Image
-import torch
 from torch.utils.data import Dataset
-
 
 
 class DeepFashionDataset(Dataset):
@@ -26,7 +24,9 @@ class DeepFashionDataset(Dataset):
         self.img_dir = os.path.join(root_dir, "Img")
         eval_path = os.path.join(root_dir, "Eval", "list_eval_partition.txt")
         self.image_names, self.items = self._load_eval_partition(eval_path, split)
-        attr_items_path = os.path.join(root_dir, "Anno", "attributes", "list_attr_items.txt")
+        attr_items_path = os.path.join(
+            root_dir, "Anno", "attributes", "list_attr_items.txt"
+        )
         self.attr_dict = self._load_attr_annotations(attr_items_path)
 
     def _load_eval_partition(self, eval_path: str, split: str):
