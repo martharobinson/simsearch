@@ -12,15 +12,15 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 1cb3d8e92b9bf73c035eeb8f4cd88da5.dir
-      size: 842962844
-      nfiles: 52712
+      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      size: 843003820
+      nfiles: 52716
     - path: scripts/embed_with_clip.py
       hash: md5
       md5: d59ad447225fc90a793acb71da456aaf
       size: 2157
     outs:
-    - path: data/embeddings/gallery.csv
+    - path: data/embeddings/baseline/gallery.csv
       hash: md5
       md5: 8dd24544cac822912fa37110a5634a2e
       size: 74202475
@@ -36,15 +36,15 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 1cb3d8e92b9bf73c035eeb8f4cd88da5.dir
-      size: 842962844
-      nfiles: 52712
+      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      size: 843003820
+      nfiles: 52716
     - path: scripts/embed_with_clip.py
       hash: md5
       md5: d59ad447225fc90a793acb71da456aaf
       size: 2157
     outs:
-    - path: data/embeddings/query.csv
+    - path: data/embeddings/baseline/query.csv
       hash: md5
       md5: cad00b562c2fb94775158ab671bca123
       size: 83668516

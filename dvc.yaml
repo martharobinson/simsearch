@@ -10,4 +10,27 @@ stages:
         - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
         - data/In-shop Clothes Retrieval Benchmark/Img/
       outs:
-        - data/embeddings/${item}.csv
+        - data/embeddings/baseline/${item}.csv
+  evaluate_methods:
+    foreach:
+      - baseline
+    do:
+      cmd: |
+        python scripts/evaluate_similiarity_search.py \
+          --eval-file data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt \
+          --embeddings-csv data/embeddings/${item}/gallery.csv \
+          --split query \
+          --output-file results/${item}_gallery_eval.csv
+        python scripts/evaluate_similiarity_search.py \
+          --eval-file data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt \
+          --embeddings-csv data/embeddings/${item}/query.csv \
+          --split query \
+          --output-file results/${item}_query_eval.csv
+      deps:
+        - scripts/evaluate_similiarity_search.py
+        - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
+        - data/embeddings/${item}/gallery.csv
+        - data/embeddings/${item}/query.csv
+      outs:
+        - results/${item}_gallery_eval.csv
+        - results/${item}_query_eval.csv
