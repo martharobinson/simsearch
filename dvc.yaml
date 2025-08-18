@@ -1,0 +1,13 @@
+stages:
+  embed_baseline:
+    foreach:
+      - gallery
+      - query
+    do:
+      cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes Retrieval Benchmark" --split ${item} --batch-size 32 --output data/embeddings/${item}.csv
+      deps:
+        - scripts/embed_with_clip.py
+        - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
+        - data/In-shop Clothes Retrieval Benchmark/Img/
+      outs:
+        - data/embeddings/${item}.csv

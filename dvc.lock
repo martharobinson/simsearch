@@ -1,0 +1,50 @@
+schema: '2.0'
+stages:
+  embed_baseline@gallery:
+    cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes 
+      Retrieval Benchmark" --split gallery --batch-size 32 --output 
+      data/embeddings/gallery.csv
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/In-shop Clothes Retrieval Benchmark/Img/
+      hash: md5
+      md5: 1cb3d8e92b9bf73c035eeb8f4cd88da5.dir
+      size: 842962844
+      nfiles: 52712
+    - path: scripts/embed_with_clip.py
+      hash: md5
+      md5: d59ad447225fc90a793acb71da456aaf
+      size: 2157
+    outs:
+    - path: data/embeddings/gallery.csv
+      hash: md5
+      md5: 8dd24544cac822912fa37110a5634a2e
+      size: 74202475
+  embed_baseline@query:
+    cmd: python scripts/embed_with_clip.py --data-root "data/In-shop Clothes 
+      Retrieval Benchmark" --split query --batch-size 32 --output 
+      data/embeddings/query.csv
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/In-shop Clothes Retrieval Benchmark/Img/
+      hash: md5
+      md5: 1cb3d8e92b9bf73c035eeb8f4cd88da5.dir
+      size: 842962844
+      nfiles: 52712
+    - path: scripts/embed_with_clip.py
+      hash: md5
+      md5: d59ad447225fc90a793acb71da456aaf
+      size: 2157
+    outs:
+    - path: data/embeddings/query.csv
+      hash: md5
+      md5: cad00b562c2fb94775158ab671bca123
+      size: 83668516
