@@ -14,6 +14,7 @@ stages:
   evaluate:
     foreach:
       - baseline
+      - lora
       # Add other methods here if needed
     do:
       cmd: python scripts/evaluate_similiarity_search.py --eval-file "data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt" --gallery-embeddings-csv data/embeddings/${item}/gallery.csv --query-embeddings-csv data/embeddings/${item}/query.csv --output-file data/results/${item}_eval.csv
@@ -33,3 +34,16 @@ stages:
     outs:
       - models/clip_vit_lora_lightning/final.ckpt
       - models/clip_vit_lora_lightning/final_lora
+  embed_with_lora_clip:
+    foreach:
+      - gallery
+      - query
+    do:
+      cmd: python scripts/embed_with_lora_clip.py --data-root "data/In-shop Clothes Retrieval Benchmark" --split ${item} --batch-size 32 --output data/embeddings/lora/${item}.csv --lora-dir models/clip_vit_lora_lightning/final_lora
+      deps:
+        - scripts/embed_with_lora_clip.py
+        - models/clip_vit_lora_lightning/final_lora
+        - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
+        - data/In-shop Clothes Retrieval Benchmark/Img/
+      outs:
+        - data/embeddings/lora/${item}.csv

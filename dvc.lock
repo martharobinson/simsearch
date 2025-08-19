@@ -104,3 +104,92 @@ stages:
       md5: 7cf565192b386095c94bffae1c48b2e8.dir
       size: 1192709
       nfiles: 3
+  embed_with_lora_clip@gallery:
+    cmd: python scripts/embed_with_lora_clip.py --data-root "data/In-shop 
+      Clothes Retrieval Benchmark" --split gallery --batch-size 32 --output 
+      data/embeddings/lora/gallery.csv --lora-dir 
+      models/clip_vit_lora_lightning/final_lora
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/In-shop Clothes Retrieval Benchmark/Img/
+      hash: md5
+      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      size: 843003820
+      nfiles: 52716
+    - path: models/clip_vit_lora_lightning/final_lora
+      hash: md5
+      md5: 7cf565192b386095c94bffae1c48b2e8.dir
+      size: 1192709
+      nfiles: 3
+    - path: scripts/embed_with_lora_clip.py
+      hash: md5
+      md5: 5bb84c187dfed393546d672019c3fa5d
+      size: 2502
+    outs:
+    - path: data/embeddings/lora/gallery.csv
+      hash: md5
+      md5: c8cfb72464524f6a315d518f13e4b90c
+      size: 105833087
+  embed_with_lora_clip@query:
+    cmd: python scripts/embed_with_lora_clip.py --data-root "data/In-shop 
+      Clothes Retrieval Benchmark" --split query --batch-size 32 --output 
+      data/embeddings/lora/query.csv --lora-dir 
+      models/clip_vit_lora_lightning/final_lora
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/In-shop Clothes Retrieval Benchmark/Img/
+      hash: md5
+      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      size: 843003820
+      nfiles: 52716
+    - path: models/clip_vit_lora_lightning/final_lora
+      hash: md5
+      md5: 7cf565192b386095c94bffae1c48b2e8.dir
+      size: 1192709
+      nfiles: 3
+    - path: scripts/embed_with_lora_clip.py
+      hash: md5
+      md5: 5bb84c187dfed393546d672019c3fa5d
+      size: 2502
+    outs:
+    - path: data/embeddings/lora/query.csv
+      hash: md5
+      md5: fe8e97d1f29b8e782928a8d6a8e3219c
+      size: 119329559
+  evaluate@lora:
+    cmd: python scripts/evaluate_similiarity_search.py --eval-file "data/In-shop
+      Clothes Retrieval Benchmark/Eval/list_eval_partition.txt" 
+      --gallery-embeddings-csv data/embeddings/lora/gallery.csv 
+      --query-embeddings-csv data/embeddings/lora/query.csv --output-file 
+      data/results/lora_eval.csv
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/embeddings/lora/gallery.csv
+      hash: md5
+      md5: c8cfb72464524f6a315d518f13e4b90c
+      size: 105833087
+    - path: data/embeddings/lora/query.csv
+      hash: md5
+      md5: fe8e97d1f29b8e782928a8d6a8e3219c
+      size: 119329559
+    - path: scripts/evaluate_similiarity_search.py
+      hash: md5
+      md5: 1cb0bcaa99d6b08a6f10962c76bfbdd3
+      size: 4065
+    outs:
+    - path: data/results/lora_eval.csv
+      hash: md5
+      md5: fd9edd8f1bc5053708004edd0ecf3821
+      size: 106

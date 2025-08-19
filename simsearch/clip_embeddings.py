@@ -1,4 +1,5 @@
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, CLIPImageProcessor, CLIPVisionModel
+from peft import PeftModel
 import torch
 
 
@@ -54,3 +55,23 @@ def load_clip_cpu(model_name="openai/clip-vit-base-patch16"):
     model = CLIPModel.from_pretrained(model_name).to("cpu")
     processor = CLIPProcessor.from_pretrained(model_name, use_fast=False)
     return model, processor
+
+
+def load_lora_clip(model_dir, device="mps"):
+    # Load base CLIP model
+    base_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
+    # Load LoRA adapters
+    lora_model = PeftModel.from_pretrained(base_model, model_dir)
+    lora_model.eval()
+    lora_model.to(device)
+    processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    return lora_model, processor
+
+
+def generate_lora_clip_embeddings(model, processor, images, device="mps"):
+    # Preprocess images
+    inputs = processor(images=images, return_tensors="pt")
+    pixel_values = inputs["pixel_values"].to(device)
+    with torch.no_grad():
+        embeds = model(pixel_values=pixel_values).pooler_output
+    return embeds
