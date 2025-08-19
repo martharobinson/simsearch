@@ -70,8 +70,8 @@ stages:
       size: 83668516
     - path: scripts/evaluate_similiarity_search.py
       hash: md5
-      md5: 1cb0bcaa99d6b08a6f10962c76bfbdd3
-      size: 4065
+      md5: 9bdf1a2e1598334d3902a74dc7efac64
+      size: 3115
     outs:
     - path: data/results/baseline_eval.csv
       hash: md5
@@ -92,8 +92,8 @@ stages:
       nfiles: 52716
     - path: scripts/train_clip_lora_lightning.py
       hash: md5
-      md5: 3f39177ee405f13f84e64ea276f71746
-      size: 10082
+      md5: 7898d123b8e12b6ba3e4225e53317f21
+      size: 10666
     outs:
     - path: models/clip_vit_lora_lightning/final.ckpt
       hash: md5
@@ -127,8 +127,8 @@ stages:
       nfiles: 3
     - path: scripts/embed_with_lora_clip.py
       hash: md5
-      md5: 5bb84c187dfed393546d672019c3fa5d
-      size: 2502
+      md5: a20ef448ee297815183042da0dc078d3
+      size: 2526
     outs:
     - path: data/embeddings/lora/gallery.csv
       hash: md5
@@ -157,8 +157,8 @@ stages:
       nfiles: 3
     - path: scripts/embed_with_lora_clip.py
       hash: md5
-      md5: 5bb84c187dfed393546d672019c3fa5d
-      size: 2502
+      md5: a20ef448ee297815183042da0dc078d3
+      size: 2526
     outs:
     - path: data/embeddings/lora/query.csv
       hash: md5
@@ -186,8 +186,8 @@ stages:
       size: 119329559
     - path: scripts/evaluate_similiarity_search.py
       hash: md5
-      md5: 1cb0bcaa99d6b08a6f10962c76bfbdd3
-      size: 4065
+      md5: 9bdf1a2e1598334d3902a74dc7efac64
+      size: 3115
     outs:
     - path: data/results/lora_eval.csv
       hash: md5
