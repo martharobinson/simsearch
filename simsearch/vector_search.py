@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import faiss
+import hnswlib
 
 
 def load_embeddings(csv_path):
@@ -15,16 +15,20 @@ def load_embeddings(csv_path):
 
 
 def build_hnsw_index(embeddings, M=32, efConstruction=200):
-    """Build a FAISS HNSW index from embeddings."""
+    """Build a HNSWLIB index from embeddings."""
     dim = embeddings.shape[1]
-    index = faiss.IndexHNSWFlat(dim, M, faiss.METRIC_INNER_PRODUCT)
-    index.hnsw.efConstruction = efConstruction
-    index.add(embeddings)
+    num_elements = embeddings.shape[0]
+    index = hnswlib.Index(space='cosine', dim=dim)
+    index.init_index(max_elements=num_elements, ef_construction=efConstruction, M=M)
+    index.add_items(embeddings)
+    index.set_ef(efConstruction)
     return index
 
 
 def search(index, query_vector, k=5):
     """Search the HNSW index for the k nearest neighbors to the query_vector."""
     query_vector = np.asarray(query_vector, dtype=np.float32).reshape(1, -1)
-    distances, indices = index.search(query_vector, k)
-    return distances[0], indices[0]
+    indices, distances = index.knn_query(query_vector, k=k)
+    # Convert hnswlib cosine distances to cosine similarity
+    similarities = 1.0 - distances[0]
+    return similarities, indices[0]

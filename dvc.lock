@@ -12,7 +12,7 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      md5: d5d4c658abd19747fff86181d4ab98fa.dir
       size: 843003820
       nfiles: 52716
     - path: scripts/embed_with_clip.py
@@ -36,7 +36,7 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      md5: d5d4c658abd19747fff86181d4ab98fa.dir
       size: 843003820
       nfiles: 52716
     - path: scripts/embed_with_clip.py
@@ -75,8 +75,8 @@ stages:
     outs:
     - path: data/results/baseline_eval.csv
       hash: md5
-      md5: 64a233bb3a5a8729f9a947f9105b581e
-      size: 103
+      md5: 75fef909e49283614e83af80cceaffa9
+      size: 106
   train_lora_clip:
     cmd: python scripts/train_clip_lora_lightning.py
     deps:
@@ -87,7 +87,7 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      md5: d5d4c658abd19747fff86181d4ab98fa.dir
       size: 843003820
       nfiles: 52716
     - path: scripts/train_clip_lora_lightning.py
@@ -117,7 +117,7 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      md5: d5d4c658abd19747fff86181d4ab98fa.dir
       size: 843003820
       nfiles: 52716
     - path: models/clip_vit_lora_lightning/final_lora
@@ -147,7 +147,7 @@ stages:
       size: 5007683
     - path: data/In-shop Clothes Retrieval Benchmark/Img/
       hash: md5
-      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      md5: d5d4c658abd19747fff86181d4ab98fa.dir
       size: 843003820
       nfiles: 52716
     - path: models/clip_vit_lora_lightning/final_lora

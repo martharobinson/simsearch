@@ -57,7 +57,9 @@ def load_clip_cpu(model_name="openai/clip-vit-base-patch16"):
     return model, processor
 
 
-def load_lora_clip(model_dir, device="mps"):
+def load_lora_clip(model_dir, device=None):
+    if device is None:
+        device = "mps" if torch.backends.mps.is_available() else "cpu"
     # Load base CLIP model
     base_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
     # Load LoRA adapters
