@@ -144,27 +144,28 @@ For most retrieval tasks in this project, recall@k, precision@k, MAP, and MRR ar
 ## How LoRA Works
 
 
-Instead of updating the full weight matrix $W$ in a neural network layer, LoRA decomposes the update into two smaller matrices $A$ and $B$:
+Instead of updating the full weight matrix `W` in a neural network layer, LoRA decomposes the update into two smaller matrices `A` and `B`:
 
-$$
+Formula:
+```text
 W' = W + BA
-$$
+```
 
 Where:
-- $W$ is the original weight matrix (frozen)
-- $A$ and $B$ are low-rank matrices (trainable)
+- `W` is the original weight matrix (frozen)
+- `A` and `B` are low-rank matrices (trainable)
 
 **With rank 8, the LoRA update matrices have the following shapes:**
 
-- Suppose the original weight matrix $W$ has shape $(\text{output\_dim}, \text{input\_dim})$.
+- Suppose the original weight matrix `W` has shape `(output_dim, input_dim)`.
 - LoRA decomposes the update into two matrices:
-	- $A$ has shape $(8, \text{input\_dim})$
-	- $B$ has shape $(\text{output\_dim}, 8)$
+	- `A` has shape `(8, input_dim)`
+	- `B` has shape `(output_dim, 8)`
 
-The product $BA$ results in a matrix of shape $(\text{output\_dim}, \text{input\_dim})$, matching $W$.
+The product `BA` results in a matrix of shape `(output_dim, input_dim)`, matching `W`.
 
 **Parameter count:**
-Instead of training all $\text{output\_dim} \times \text{input\_dim}$ parameters, LoRA only trains $8 \times (\text{input\_dim} + \text{output\_dim})$ parameters per layer, which is much smaller for typical transformer layers.
+Instead of training all `output_dim * input_dim` parameters, LoRA only trains `8 * (input_dim + output_dim)` parameters per layer, which is much smaller for typical transformer layers.
 
 ## Usage in This Project
 
