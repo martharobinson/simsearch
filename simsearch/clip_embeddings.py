@@ -45,3 +45,12 @@ def load_clip_mps(model_name="openai/clip-vit-base-patch16"):
     model = CLIPModel.from_pretrained(model_name).to(device)
     processor = CLIPProcessor.from_pretrained(model_name, use_fast=False)
     return model, processor
+
+def load_clip_cpu(model_name="openai/clip-vit-base-patch16"):
+    """
+    Loads CLIP model and processor from transformers, moves model to CPU for inference.
+    Returns (model, processor) tuple.
+    """
+    model = CLIPModel.from_pretrained(model_name).to("cpu")
+    processor = CLIPProcessor.from_pretrained(model_name, use_fast=False)
+    return model, processor

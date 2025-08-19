@@ -24,3 +24,12 @@ stages:
         - data/embeddings/${item}/query.csv
       outs:
         - data/results/${item}_eval.csv
+  train_lora_clip:
+    cmd: python scripts/train_clip_lora_lightning.py
+    deps:
+      - scripts/train_clip_lora_lightning.py
+      - data/In-shop Clothes Retrieval Benchmark/Eval/list_eval_partition.txt
+      - data/In-shop Clothes Retrieval Benchmark/Img/
+    outs:
+      - models/clip_vit_lora_lightning/final.ckpt
+      - models/clip_vit_lora_lightning/final_lora

@@ -77,3 +77,30 @@ stages:
       hash: md5
       md5: 64a233bb3a5a8729f9a947f9105b581e
       size: 103
+  train_lora_clip:
+    cmd: python scripts/train_clip_lora_lightning.py
+    deps:
+    - path: data/In-shop Clothes Retrieval 
+        Benchmark/Eval/list_eval_partition.txt
+      hash: md5
+      md5: 5ef30d675b58d5b7245589fa41c2cd74
+      size: 5007683
+    - path: data/In-shop Clothes Retrieval Benchmark/Img/
+      hash: md5
+      md5: 87b7fac3e2c5afe60e2b6d4d965476df.dir
+      size: 843003820
+      nfiles: 52716
+    - path: scripts/train_clip_lora_lightning.py
+      hash: md5
+      md5: 146e94bf37b4cf5cf6b67ddcee9c4e3e
+      size: 10192
+    outs:
+    - path: models/clip_vit_lora_lightning/final.ckpt
+      hash: md5
+      md5: 2b94a30b658fcbecd3f1a1802f3f239e
+      size: 353536239
+    - path: models/clip_vit_lora_lightning/final_lora
+      hash: md5
+      md5: 7cf565192b386095c94bffae1c48b2e8.dir
+      size: 1192709
+      nfiles: 3
