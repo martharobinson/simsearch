@@ -1,4 +1,3 @@
-# Top-level dataset wrapper for image pairs
 import os
 import time
 import torch
@@ -181,10 +180,8 @@ class WrappedPairDataset(torch.utils.data.Dataset):
             img_b = img_b['pixel_values'].squeeze(0)
         return img_a, img_b, label
 
-    # ...existing code...
 
 if __name__ == "__main__":
-    # Device setup handled by Lightning
     vision_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
     vision_model.eval()
     for param in vision_model.parameters():

@@ -49,11 +49,26 @@ To assess the performance of image retrieval, we use several standard metrics:
 
 These metrics are well-suited for the In-shop Clothes Retrieval Benchmark, where each query has a single correct gallery item (binary relevance).
 
+## Evaluation Results
+
+The following table summarizes the performance metrics for baseline and LORA models:
+
+| Model   | Recall@5 | Precision@5 | MAP        | MRR        |
+|---------|----------|-------------|------------|------------|
+| Baseline| 0.7655   | 0.2743      | 0.6129     | 0.6396     |
+| LORA    | 0.8949   | 0.4147      | 0.7715     | 0.8029     |
+
+**Notes:**
+- Higher values indicate better performance.
+- Metrics are computed on the In-shop Clothes Retrieval Benchmark.
+
 ### About NDCG
 
 **Normalized Discounted Cumulative Gain (NDCG)** is a popular metric for ranking tasks, especially when relevance is graded (e.g., 0, 1, 2, ...). In this benchmark, relevance is binary (0 or 1), so NDCG reduces to a form similar to MAP and MRR. While NDCG can still be computed, it does not provide additional insight beyond the chosen metrics when only binary relevance is available. If future tasks involve graded relevance (e.g., partial matches or attribute similarity), NDCG would become more valuable.
 
 For most retrieval tasks in this project, recall@k, precision@k, MAP, and MRR are sufficient and interpretable.
+
+
 
 ## What is LoRA?
 
