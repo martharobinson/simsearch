@@ -92,8 +92,8 @@ stages:
       nfiles: 52716
     - path: scripts/train_clip_lora_lightning.py
       hash: md5
-      md5: 7898d123b8e12b6ba3e4225e53317f21
-      size: 10666
+      md5: af921655240c06cd7496489cb6475468
+      size: 11167
     outs:
     - path: models/clip_vit_lora_lightning/final.ckpt
       hash: md5

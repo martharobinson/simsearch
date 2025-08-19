@@ -15,16 +15,16 @@ from PIL import Image
 
 
 class CLIPLoRALightningModule(pl.LightningModule):
-    def __init__(self, vision_model, lr=1e-4, weight_decay=1e-2):
+    def __init__(self, vision_model: CLIPVisionModel, lr: float = 1e-4, weight_decay: float = 1e-2):
         super().__init__()
         self.vision_model = vision_model
         self.lr = lr
         self.weight_decay = weight_decay
 
-    def l2_normalize(self, x):
+    def l2_normalize(self, x: torch.Tensor) -> torch.Tensor:
         return F.normalize(x, p=2, dim=-1)
 
-    def info_nce_loss(self, emb_a, emb_b, temperature=0.07):
+    def info_nce_loss(self, emb_a: torch.Tensor, emb_b: torch.Tensor, temperature: float = 0.07) -> torch.Tensor:
         # L2 normalize embeddings
         emb_a = self.l2_normalize(emb_a)
         emb_b = self.l2_normalize(emb_b)
@@ -40,7 +40,7 @@ class CLIPLoRALightningModule(pl.LightningModule):
         loss = (loss_ab + loss_ba) / 2
         return loss
 
-    def forward(self, input_ids=None, pixel_values=None, attention_mask=None, **kwargs):
+    def forward(self, input_ids: torch.Tensor = None, pixel_values: torch.Tensor = None, attention_mask: torch.Tensor = None, **kwargs) -> torch.Tensor:
         # Main forward for PEFT/LoRA compatibility
         # Use argument parser logic to select correct input
         x = self._parse_input(
@@ -52,8 +52,8 @@ class CLIPLoRALightningModule(pl.LightningModule):
         return self.vision_model(pixel_values=x).pooler_output
 
     def _parse_input(
-        self, input_ids=None, pixel_values=None, attention_mask=None, **kwargs
-    ):
+        self, input_ids: torch.Tensor = None, pixel_values: torch.Tensor = None, attention_mask: torch.Tensor = None, **kwargs
+    ) -> torch.Tensor:
         # Argument parser for PEFT/LoRA compatibility
         if input_ids is not None:
             return input_ids
@@ -65,7 +65,7 @@ class CLIPLoRALightningModule(pl.LightningModule):
                     return value
             raise ValueError("No valid image tensor found in inputs.")
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: tuple, batch_idx: int) -> torch.Tensor:
         start_time = time.time()
         img_a, img_b, _ = batch
         emb_a = self.forward(pixel_values=img_a)
@@ -82,7 +82,7 @@ class CLIPLoRALightningModule(pl.LightningModule):
         self.log("batch_time", batch_time)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: tuple, batch_idx: int) -> dict:
         start_time = time.time()
         img_a, img_b, label = batch
         emb_a = self.forward(pixel_values=img_a)
@@ -98,7 +98,7 @@ class CLIPLoRALightningModule(pl.LightningModule):
         self.val_outputs.append({"scores": scores.cpu(), "labels": label.cpu()})
         return {"scores": scores.cpu(), "labels": label.cpu()}
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         if hasattr(self, "val_outputs") and self.val_outputs:
             all_scores = torch.cat([x["scores"] for x in self.val_outputs]).numpy()
             all_labels = torch.cat([x["labels"] for x in self.val_outputs]).numpy()
@@ -114,7 +114,7 @@ class CLIPLoRALightningModule(pl.LightningModule):
         else:
             self.log("val_roc_auc", float("nan"))
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         params = filter(lambda p: p.requires_grad, self.vision_model.parameters())
         optimizer = torch.optim.AdamW(
             params, lr=self.lr, weight_decay=self.weight_decay
@@ -125,13 +125,13 @@ class CLIPLoRALightningModule(pl.LightningModule):
 class DeepFashionDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        root_dir,
-        eval_partition_path,
-        batch_size=32,
-        n_pairs=5000,
-        seed=42,
-        train_num_workers=0,
-        val_num_workers=0,
+        root_dir: str,
+        eval_partition_path: str,
+        batch_size: int = 32,
+        n_pairs: int = 5000,
+        seed: int = 42,
+        train_num_workers: int = 0,
+        val_num_workers: int = 0,
     ):
         super().__init__()
         self.root_dir = root_dir
@@ -153,7 +153,7 @@ class DeepFashionDataModule(pl.LightningDataModule):
             "openai/clip-vit-base-patch32"
         )
 
-    def preprocess(self, img):
+    def preprocess(self, img: Image.Image) -> torch.Tensor:
         # Ensure input is PIL.Image
         if not isinstance(img, Image.Image):
             img = Image.fromarray(np.array(img))
@@ -165,7 +165,7 @@ class DeepFashionDataModule(pl.LightningDataModule):
             raise ValueError("CLIPImageProcessor did not return 'pixel_values'.")
         return pixel_values.squeeze(0)
 
-    def setup(self, stage=None):
+    def setup(self, stage: str = None) -> None:
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
         # Error handling for file paths
@@ -191,7 +191,7 @@ class DeepFashionDataModule(pl.LightningDataModule):
         self.train_dataset = Subset(wrapped_dataset, train_indices)
         self.val_dataset = Subset(wrapped_dataset, val_indices)
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -199,7 +199,7 @@ class DeepFashionDataModule(pl.LightningDataModule):
             num_workers=self.train_num_workers,
         )
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -213,14 +213,14 @@ class WrappedPairDataset(torch.utils.data.Dataset):
     Dataset wrapper that applies preprocessing to image pairs.
     """
 
-    def __init__(self, base_dataset, preprocess):
+    def __init__(self, base_dataset: torch.utils.data.Dataset, preprocess: callable):
         self.base = base_dataset
         self.preprocess = preprocess
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.base)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple:
         img_a, img_b, label = self.base[idx]
         img_a = self.preprocess(img_a)
         img_b = self.preprocess(img_b)

@@ -1,5 +1,69 @@
 # SimSearch: LoRA Approach for Efficient Model Fine-Tuning
 
+## Installation
+
+This project uses [Poetry](https://python-poetry.org/) for dependency management and [DVC](https://dvc.org/) for data versioning.
+
+1. **Install Poetry (if not already installed):**
+	```bash
+	curl -sSL https://install.python-poetry.org | python3 -
+	```
+
+2. **Install dependencies:**
+	```bash
+	poetry install
+	```
+
+3. **Download datset:**
+Download the [The In-shop Clothes Retrieval Benchmark](http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion/InShopRetrieval.html) dataset and add it to the ``data`` folder.
+
+## Running with DVC
+
+To reproduce experiments or run the pipeline:
+
+1. **Run the DVC pipeline:**
+	```bash
+	poetry run dvc repro
+	```
+	This will execute all stages defined in `dvc.yaml` (e.g., embedding, training, evaluation) and ensure data and results are up to date.
+
+2. **Check pipeline status:**
+	```bash
+	poetry run dvc status
+	```
+
+3. **View results:**
+	Results and metrics will be saved in the `results/` directory. You can inspect evaluation outputs and compare model performance.
+
+For more details on DVC usage, see the [DVC documentation](https://dvc.org/doc).
+
+## Running the Backend and Frontend
+
+This project provides two main applications:
+
+### Backend API (`app.py`)
+
+The backend serves the similarity search API. To run it:
+
+```bash
+poetry run python -m simsearch.app
+```
+
+This will start the backend server. By default, it loads the gallery embeddings and exposes endpoints for similarity search queries.
+
+### Frontend UI (`ui_app.py`)
+
+The frontend provides a user interface for querying the similarity search system. To run it:
+
+```bash
+poetry run python -m simsearch.ui_app
+```
+
+This will launch the UI, allowing you to upload query images and view retrieval results interactively.
+
+**Note:** Ensure the backend is running before starting the frontend, as the UI communicates with the API server.
+
+
 ## Dataset
 
 [The In-shop Clothes Retrieval Benchmark](http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion/InShopRetrieval.html) is a subset of the [DeepFashion dataset](http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html), designed to evaluate algorithms for large-scale fashion recognition and retrieval. The benchmark focuses on the challenging problem of identifying and retrieving images of clothing items from a gallery, given a query image. This task simulates real-world scenarios such as online shopping, where users may wish to find visually similar or identical items across different images, poses, and scales.
@@ -14,13 +78,13 @@ The goal is to advance research in computer vision for fashion, enabling more ac
 
 ## Vector Search Lookup
 
-This project uses CLIP embeddings and FAISS for fast image similarity search. Gallery image embeddings are precomputed and stored in a CSV file. At runtime, these embeddings are loaded and indexed using FAISS’s HNSW (Hierarchical Navigable Small World Graph) algorithm for efficient nearest neighbor search.
+This project uses CLIP embeddings for fast image similarity search. Gallery image embeddings are precomputed and stored in a CSV file. At runtime, these embeddings are loaded and indexed using [hnswlib](https://github.com/nmslib/hnswlib), a high-performance library for approximate nearest neighbor search based on Hierarchical Navigable Small World (HNSW) graphs. See `simsearch/vector_search.py` for implementation details.
 
 **How the lookup works:**
 
 1. The query image is encoded into a CLIP embedding.
 2. The embedding is normalized to a unit vector (for cosine similarity).
-3. FAISS searches for the top-k most similar gallery images using cosine similarity.
+3. The system searches for the top-k most similar gallery images using cosine similarity via hnswlib's HNSW index.
 
 ![Project architecture](diagrams/Architecture.png)
 
@@ -36,7 +100,7 @@ HNSW (Hierarchical Navigable Small World Graph) is a graph-based algorithm for a
 
 CLIP is trained with a contrastive loss that encourages similar images and texts to have embeddings pointing in similar directions, regardless of their magnitude. Cosine similarity measures the angle between vectors, making it robust to differences in scale and focusing on semantic similarity. Since CLIP embeddings often have varying norms, L2 distance can be dominated by magnitude rather than direction, which is less meaningful for semantic comparison. Cosine similarity is also less sensitive to outliers and works well for high-dimensional, dense representations like those produced by CLIP.
 
-In this project, FAISS’s HNSW implementation is used to index and search CLIP embeddings for image similarity tasks.
+In this project, hnswlib's HNSW implementation is used to index and search CLIP embeddings for image similarity tasks. For details, see `simsearch/vector_search.py`.
 
 ## Evaluation Metrics for Similarity Search
 
@@ -68,8 +132,6 @@ The following table summarizes the performance metrics for baseline and LORA mod
 
 For most retrieval tasks in this project, recall@k, precision@k, MAP, and MRR are sufficient and interpretable.
 
-
-
 ## What is LoRA?
 
 **LoRA (Low-Rank Adaptation)** is a technique for efficiently fine-tuning large neural networks. Instead of updating all weights, LoRA injects trainable low-rank matrices into specific layers (usually attention or linear layers), drastically reducing the number of parameters to train.
@@ -81,6 +143,7 @@ For most retrieval tasks in this project, recall@k, precision@k, MAP, and MRR ar
 
 ## How LoRA Works
 
+
 Instead of updating the full weight matrix $W$ in a neural network layer, LoRA decomposes the update into two smaller matrices $A$ and $B$:
 
 $$
@@ -90,6 +153,18 @@ $$
 Where:
 - $W$ is the original weight matrix (frozen)
 - $A$ and $B$ are low-rank matrices (trainable)
+
+**With rank 8, the LoRA update matrices have the following shapes:**
+
+- Suppose the original weight matrix $W$ has shape $(\text{output\_dim}, \text{input\_dim})$.
+- LoRA decomposes the update into two matrices:
+	- $A$ has shape $(8, \text{input\_dim})$
+	- $B$ has shape $(\text{output\_dim}, 8)$
+
+The product $BA$ results in a matrix of shape $(\text{output\_dim}, \text{input\_dim})$, matching $W$.
+
+**Parameter count:**
+Instead of training all $\text{output\_dim} \times \text{input\_dim}$ parameters, LoRA only trains $8 \times (\text{input\_dim} + \text{output\_dim})$ parameters per layer, which is much smaller for typical transformer layers.
 
 ## Usage in This Project
 
@@ -102,6 +177,30 @@ Below is a visual diagram showing LoRA applied to the attention blocks of the Vi
 ![LoRA applied to ViT Attention](diagrams/LORA_Attention.png)
 
 Only the LoRA adapters are updated during training; the rest of the ViT and CLIP model weights are kept frozen.
+
+## Data Augmentation
+
+To improve generalization and robustness, this project applies data augmentation to training images before they are processed by the CLIP model. The following augmentations are used:
+
+- **Random Horizontal Flip:**  
+	Images are randomly flipped left-to-right, helping the model learn invariance to orientation.
+- **Color Jitter:**  
+	Randomly adjusts brightness, contrast, saturation, and hue (brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1). This encourages the model to focus on shape and texture rather than color, and makes it robust to lighting variations.
+
+These augmentations are applied using `torchvision.transforms.Compose` and are performed on each image in the training set. Augmentation helps prevent overfitting and improves the model’s ability to generalize to new, unseen images.
+
+## Loss Function
+
+This project uses the **InfoNCE (Contrastive) Loss** to train the LoRA-adapted CLIP model. The loss encourages matching image pairs to have similar embeddings and non-matching pairs to be dissimilar.
+
+- **How it works:**  
+	For each batch, image embeddings are L2-normalized and compared using dot products (cosine similarity). The logits are divided by a temperature parameter to control the sharpness of the distribution.
+- **Bidirectional loss:**  
+	The loss is computed in both directions (A→B and B→A) and averaged, ensuring symmetry.
+- **Implementation:**  
+	The InfoNCE loss is implemented as cross-entropy over the similarity logits, with each image in the batch treated as the correct match for its counterpart.
+
+This approach is effective for retrieval tasks, as it directly optimizes the model to produce discriminative and semantically meaningful embeddings.
 
 See `scripts/train_clip_lora_lightning.py` for implementation details.
 
