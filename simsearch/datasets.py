@@ -10,6 +10,7 @@ class DeepFashionDataset(Dataset):
     PyTorch Dataset for DeepFashion In-shop Clothes Retrieval Benchmark.
     Loads images, item IDs, and attributes only.
     """
+
     HEADER_LINES = 2  # Number of header lines to skip in annotation files
 
     def __init__(
@@ -29,7 +30,9 @@ class DeepFashionDataset(Dataset):
         )
         self.attr_dict = self._load_attr_annotations(attr_items_path)
 
-    def _load_eval_partition(self, eval_path: str, split: str):
+    def _load_eval_partition(
+        self, eval_path: str, split: str
+    ) -> tuple[list[str], list[str]]:
         image_names = []
         items = []
         try:
@@ -47,7 +50,7 @@ class DeepFashionDataset(Dataset):
             print(f"Error loading eval partition: {e}")
         return image_names, items
 
-    def _load_attr_annotations(self, attr_items_path: str):
+    def _load_attr_annotations(self, attr_items_path: str) -> dict[str, list[str]]:
         attr_dict = {}
         if not os.path.exists(attr_items_path):
             return attr_dict
@@ -89,12 +92,14 @@ class DeepFashionDataset(Dataset):
             sample["attributes"] = self.attr_dict[item_id]
         return sample
 
+
 class DeepFashionPairDataset(Dataset):
     """
     PyTorch Dataset for DeepFashion In-shop Clothes Retrieval Benchmark (image pairs).
     Each sample is a tuple: (img_a, img_b, label)
     label: 1 if same product, 0 if different products.
     """
+
     def __init__(
         self,
         root_dir: str,
@@ -107,11 +112,15 @@ class DeepFashionPairDataset(Dataset):
         self.img_dir = os.path.join(root_dir, "Img")
         self.transform = transform
         self.split = split
-        self.image_names, self.items = self._load_eval_partition(eval_partition_path, split)
+        self.image_names, self.items = self._load_eval_partition(
+            eval_partition_path, split
+        )
         self.item_to_imgs = self._group_by_item()
         self.pairs, self.labels = self._make_pairs(n_pairs)
 
-    def _load_eval_partition(self, eval_path: str, split: str):
+    def _load_eval_partition(
+        self, eval_path: str, split: str
+    ) -> tuple[list[str], list[str]]:
         image_names = []
         items = []
         try:
@@ -129,13 +138,13 @@ class DeepFashionPairDataset(Dataset):
             print(f"Error loading eval partition: {e}")
         return image_names, items
 
-    def _group_by_item(self):
+    def _group_by_item(self) -> dict[str, list[str]]:
         item_to_imgs = {}
         for img, item in zip(self.image_names, self.items):
             item_to_imgs.setdefault(item, []).append(img)
         return item_to_imgs
 
-    def _make_pairs(self, n_pairs):
+    def _make_pairs(self, n_pairs: int) -> tuple[list[tuple[str, str]], list[int]]:
         pairs = []
         labels = []
         items = list(self.item_to_imgs.keys())
@@ -145,7 +154,7 @@ class DeepFashionPairDataset(Dataset):
             if len(imgs) < 2:
                 continue
             for i in range(len(imgs)):
-                for j in range(i+1, len(imgs)):
+                for j in range(i + 1, len(imgs)):
                     pairs.append((imgs[i], imgs[j]))
                     labels.append(1)
         # Negative pairs (different items)
@@ -160,7 +169,7 @@ class DeepFashionPairDataset(Dataset):
     def __len__(self) -> int:
         return len(self.pairs)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> tuple[Any, Any, int]:
         img_a_path = os.path.join(self.img_dir, self.pairs[idx][0])
         img_b_path = os.path.join(self.img_dir, self.pairs[idx][1])
         img_a = Image.open(img_a_path).convert("RGB")

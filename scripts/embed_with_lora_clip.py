@@ -7,10 +7,12 @@ import torch
 from simsearch.datasets import DeepFashionDataset
 from simsearch.clip_embeddings import load_lora_clip, generate_lora_clip_embeddings
 
+
 def custom_collate(batch):
     images = [item["image"] for item in batch]
     filenames = [item["filename"] for item in batch]
     return {"image": images, "filename": filenames}
+
 
 @click.command()
 @click.option(
@@ -66,7 +68,9 @@ def main(data_root, split, batch_size, output, lora_dir):
     for batch in tqdm(dataloader, desc=f"Embedding {split} images", total=num_batches):
         images = batch["image"]
         filenames = batch["filename"]
-        embeds = generate_lora_clip_embeddings(model, processor, images=images, device=device)
+        embeds = generate_lora_clip_embeddings(
+            model, processor, images=images, device=device
+        )
         image_embeds = embeds.cpu().numpy()
         df = pd.DataFrame(image_embeds, index=filenames)
         df.index.name = "filename"

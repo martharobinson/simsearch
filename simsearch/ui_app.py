@@ -44,8 +44,10 @@ def search_api(image, k, endpoint_url):
         except Exception:
             img = None
         images.append(img)
-        item_id = os.path.dirname(r['filename']).split(os.sep)[-1]
-        captions.append(f"{os.path.basename(r['filename'])} [ID: {item_id}] (score: {r['score']:.2f})")
+        item_id = os.path.dirname(r["filename"]).split(os.sep)[-1]
+        captions.append(
+            f"{os.path.basename(r['filename'])} [ID: {item_id}] (score: {r['score']:.2f})"
+        )
     return images, captions
 
 
@@ -63,7 +65,7 @@ def image_to_bytes(image):
 
 METHODS = [
     {"name": "CLIP-baseline", "endpoint": "http://localhost:8000/baseline"},
-    {"name": "CLIP-LORA", "endpoint": "http://localhost:8000/lora"}
+    {"name": "CLIP-LORA", "endpoint": "http://localhost:8000/lora"},
     # Add more methods here
 ]
 

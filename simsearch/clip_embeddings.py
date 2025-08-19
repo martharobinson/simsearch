@@ -3,7 +3,16 @@ from peft import PeftModel
 import torch
 
 
-def generate_clip_embeddings(model, processor, images=None, texts=None, device=None):
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+
+def generate_clip_embeddings(
+    model: CLIPModel,
+    processor: CLIPProcessor,
+    images: Optional[Union[Any, List[Any]]] = None,
+    texts: Optional[Union[str, List[str]]] = None,
+    device: Optional[str] = None,
+) -> Dict[str, torch.Tensor]:
     """
     Generates CLIP embeddings for images and/or texts.
     Handles single input or batches.
@@ -37,7 +46,9 @@ def generate_clip_embeddings(model, processor, images=None, texts=None, device=N
     return result
 
 
-def load_clip_mps(model_name="openai/clip-vit-base-patch16"):
+def load_clip_mps(
+    model_name: str = "openai/clip-vit-base-patch32",
+) -> Tuple[CLIPModel, CLIPProcessor]:
     """
     Loads CLIP model and processor from transformers, moves model to MPS for inference.
     Returns (model, processor) tuple.
@@ -47,7 +58,10 @@ def load_clip_mps(model_name="openai/clip-vit-base-patch16"):
     processor = CLIPProcessor.from_pretrained(model_name, use_fast=False)
     return model, processor
 
-def load_clip_cpu(model_name="openai/clip-vit-base-patch16"):
+
+def load_clip_cpu(
+    model_name: str = "openai/clip-vit-base-patch32",
+) -> Tuple[CLIPModel, CLIPProcessor]:
     """
     Loads CLIP model and processor from transformers, moves model to CPU for inference.
     Returns (model, processor) tuple.
@@ -57,7 +71,12 @@ def load_clip_cpu(model_name="openai/clip-vit-base-patch16"):
     return model, processor
 
 
-def load_lora_clip(model_dir, device=None):
+def load_lora_clip(
+    model_dir: str, device: Optional[str] = None
+) -> Tuple[PeftModel, CLIPImageProcessor]:
+    """
+    Loads a CLIP vision model and applies LoRA adapters from the specified directory.
+    """
     if device is None:
         device = "mps" if torch.backends.mps.is_available() else "cpu"
     # Load base CLIP model
@@ -70,7 +89,17 @@ def load_lora_clip(model_dir, device=None):
     return lora_model, processor
 
 
-def generate_lora_clip_embeddings(model, processor, images, device="mps"):
+def generate_lora_clip_embeddings(
+    model: PeftModel,
+    processor: CLIPImageProcessor,
+    images: Union[Any, List[Any]],
+    device: Optional[str] = None,
+) -> torch.Tensor:
+    """
+    Generates image embeddings using a LoRA-CLIP model and processor.
+    """
+    if device is None:
+        device = "mps" if torch.backends.mps.is_available() else "cpu"
     # Preprocess images
     inputs = processor(images=images, return_tensors="pt")
     pixel_values = inputs["pixel_values"].to(device)

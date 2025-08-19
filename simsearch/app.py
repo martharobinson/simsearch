@@ -1,3 +1,4 @@
+from typing import Any, List
 from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.responses import JSONResponse
 from PIL import Image
@@ -14,25 +15,32 @@ import logging
 app = FastAPI()
 
 # Config
-BASELINE_EMBEDDINGS_CSV = Path(__file__).parent.parent / "data/embeddings/baseline/gallery.csv"
+BASELINE_EMBEDDINGS_CSV = (
+    Path(__file__).parent.parent / "data/embeddings/baseline/gallery.csv"
+)
 LORA_EMBEDDINGS_CSV = Path(__file__).parent.parent / "data/embeddings/lora/gallery.csv"
 K_DEFAULT = 5
 
 # Logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 logger.info("Loading baseline CLIP model and processor...")
 baseline_model, processor = load_clip_mps()
 logger.info("Loading baseline gallery embeddings...")
 baseline_embeddings, baseline_filenames = load_embeddings(BASELINE_EMBEDDINGS_CSV)
-logger.info(f"Loaded {len(baseline_embeddings)} baseline embeddings with shape {baseline_embeddings.shape}.")
-logger.info(f'NaNs: {np.isnan(baseline_embeddings).sum()}, Infs: {np.isinf(baseline_embeddings).sum()}')
+logger.info(
+    f"Loaded {len(baseline_embeddings)} baseline embeddings with shape {baseline_embeddings.shape}."
+)
+logger.info(
+    f"NaNs: {np.isnan(baseline_embeddings).sum()}, Infs: {np.isinf(baseline_embeddings).sum()}"
+)
 logger.info("Building baseline index...")
 baseline_index = build_hnsw_index(baseline_embeddings)
 logger.info("Loading LoRA model and processor...")
 lora_model, lora_processor = load_lora_clip(
-    model_dir=Path(__file__).parent.parent / "models/clip_vit_lora_lightning/final_lora",
+    model_dir=Path(__file__).parent.parent
+    / "models/clip_vit_lora_lightning/final_lora",
 )
 logger.info("Loading LoRA gallery embeddings and building index...")
 lora_embeddings, lora_filenames = load_embeddings(LORA_EMBEDDINGS_CSV)
@@ -40,14 +48,14 @@ lora_index = build_hnsw_index(lora_embeddings)
 
 
 async def search_similar_images(
-    file,
-    k,
-    model,
-    processor,
-    filenames,
-    index,
-    is_lora: bool = False
-):
+    file: UploadFile,
+    k: int,
+    model: Any,
+    processor: Any,
+    filenames: List[str],
+    index: Any,
+    is_lora: bool = False,
+) -> JSONResponse:
     logger.info(f"search_similar_images called (is_lora={is_lora}, k={k})")
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -72,10 +80,11 @@ async def search_similar_images(
     logger.info(f"Returning {len(results)} results.")
     return JSONResponse(content={"results": results})
 
+
 @app.post("/baseline")
 async def search_image(
     file: UploadFile = File(...), k: int = Query(K_DEFAULT, ge=1, le=50)
-):
+) -> JSONResponse:
     logger.info(f"/baseline endpoint called with k={k}")
     return await search_similar_images(
         file=file,
@@ -84,7 +93,7 @@ async def search_image(
         processor=processor,
         filenames=baseline_filenames,
         index=baseline_index,
-        is_lora=False
+        is_lora=False,
     )
 
 
@@ -92,7 +101,7 @@ async def search_image(
 @app.post("/lora")
 async def search_image_lora(
     file: UploadFile = File(...), k: int = Query(K_DEFAULT, ge=1, le=50)
-):
+) -> JSONResponse:
     logger.info(f"/lora endpoint called with k={k}")
     return await search_similar_images(
         file=file,
@@ -101,10 +110,9 @@ async def search_image_lora(
         processor=lora_processor,
         filenames=lora_filenames,
         index=lora_index,
-        is_lora=True
+        is_lora=True,
     )
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

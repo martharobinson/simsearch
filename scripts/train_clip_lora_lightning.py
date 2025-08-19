@@ -13,6 +13,7 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 from PIL import Image
 
+
 class CLIPLoRALightningModule(pl.LightningModule):
     def __init__(self, vision_model, lr=1e-4, weight_decay=1e-2):
         super().__init__()
@@ -42,10 +43,17 @@ class CLIPLoRALightningModule(pl.LightningModule):
     def forward(self, input_ids=None, pixel_values=None, attention_mask=None, **kwargs):
         # Main forward for PEFT/LoRA compatibility
         # Use argument parser logic to select correct input
-        x = self._parse_input(input_ids=input_ids, pixel_values=pixel_values, attention_mask=attention_mask, **kwargs)
+        x = self._parse_input(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            **kwargs,
+        )
         return self.vision_model(pixel_values=x).pooler_output
 
-    def _parse_input(self, input_ids=None, pixel_values=None, attention_mask=None, **kwargs):
+    def _parse_input(
+        self, input_ids=None, pixel_values=None, attention_mask=None, **kwargs
+    ):
         # Argument parser for PEFT/LoRA compatibility
         if input_ids is not None:
             return input_ids
@@ -64,10 +72,14 @@ class CLIPLoRALightningModule(pl.LightningModule):
         emb_b = self.forward(pixel_values=img_b)
         loss = self.info_nce_loss(emb_a, emb_b)
         batch_time = time.time() - start_time
-        lr = self.trainer.optimizers[0].param_groups[0]['lr'] if self.trainer.optimizers else self.lr
-        self.log('train_loss', loss)
-        self.log('learning_rate', lr, prog_bar=True)
-        self.log('batch_time', batch_time)
+        lr = (
+            self.trainer.optimizers[0].param_groups[0]["lr"]
+            if self.trainer.optimizers
+            else self.lr
+        )
+        self.log("train_loss", loss)
+        self.log("learning_rate", lr, prog_bar=True)
+        self.log("batch_time", batch_time)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -79,34 +91,48 @@ class CLIPLoRALightningModule(pl.LightningModule):
         emb_b = self.l2_normalize(emb_b)
         scores = F.cosine_similarity(emb_a, emb_b)
         batch_time = time.time() - start_time
-        self.log('val_batch_time', batch_time)
+        self.log("val_batch_time", batch_time)
         # Store outputs for epoch end
-        if not hasattr(self, 'val_outputs'):
+        if not hasattr(self, "val_outputs"):
             self.val_outputs = []
-        self.val_outputs.append({'scores': scores.cpu(), 'labels': label.cpu()})
-        return {'scores': scores.cpu(), 'labels': label.cpu()}
+        self.val_outputs.append({"scores": scores.cpu(), "labels": label.cpu()})
+        return {"scores": scores.cpu(), "labels": label.cpu()}
 
     def on_validation_epoch_end(self):
-        if hasattr(self, 'val_outputs') and self.val_outputs:
-            all_scores = torch.cat([x['scores'] for x in self.val_outputs]).numpy()
-            all_labels = torch.cat([x['labels'] for x in self.val_outputs]).numpy()
+        if hasattr(self, "val_outputs") and self.val_outputs:
+            all_scores = torch.cat([x["scores"] for x in self.val_outputs]).numpy()
+            all_labels = torch.cat([x["labels"] for x in self.val_outputs]).numpy()
             if len(set(all_labels)) > 1:
                 auc = roc_auc_score(all_labels, all_scores)
             else:
-                auc = float('nan')
-                self.print("[Warning] ROC AUC not computable: only one class present in validation labels.")
-            self.log('val_roc_auc', auc)
+                auc = float("nan")
+                self.print(
+                    "[Warning] ROC AUC not computable: only one class present in validation labels."
+                )
+            self.log("val_roc_auc", auc)
             self.val_outputs = []  # Clear for next epoch
         else:
-            self.log('val_roc_auc', float('nan'))
+            self.log("val_roc_auc", float("nan"))
 
     def configure_optimizers(self):
         params = filter(lambda p: p.requires_grad, self.vision_model.parameters())
-        optimizer = torch.optim.AdamW(params, lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = torch.optim.AdamW(
+            params, lr=self.lr, weight_decay=self.weight_decay
+        )
         return optimizer
 
+
 class DeepFashionDataModule(pl.LightningDataModule):
-    def __init__(self, root_dir, eval_partition_path, batch_size=32, n_pairs=5000, seed=42, train_num_workers=0, val_num_workers=0):
+    def __init__(
+        self,
+        root_dir,
+        eval_partition_path,
+        batch_size=32,
+        n_pairs=5000,
+        seed=42,
+        train_num_workers=0,
+        val_num_workers=0,
+    ):
         super().__init__()
         self.root_dir = root_dir
         self.eval_partition_path = eval_partition_path
@@ -115,12 +141,17 @@ class DeepFashionDataModule(pl.LightningDataModule):
         self.seed = seed
         self.train_num_workers = train_num_workers
         self.val_num_workers = val_num_workers
-        self.augment = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        ])
-        self.clip_processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32")
-
+        self.augment = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(),
+                transforms.ColorJitter(
+                    brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1
+                ),
+            ]
+        )
+        self.clip_processor = CLIPImageProcessor.from_pretrained(
+            "openai/clip-vit-base-patch32"
+        )
 
     def preprocess(self, img):
         # Ensure input is PIL.Image
@@ -129,7 +160,7 @@ class DeepFashionDataModule(pl.LightningDataModule):
         img = self.augment(img)
         inputs = self.clip_processor(images=img, return_tensors="pt")
         # Only return pixel_values, never input_ids
-        pixel_values = inputs.get('pixel_values', None)
+        pixel_values = inputs.get("pixel_values", None)
         if pixel_values is None:
             raise ValueError("CLIPImageProcessor did not return 'pixel_values'.")
         return pixel_values.squeeze(0)
@@ -141,9 +172,16 @@ class DeepFashionDataModule(pl.LightningDataModule):
         if not os.path.exists(self.root_dir):
             raise FileNotFoundError(f"Root directory not found: {self.root_dir}")
         if not os.path.exists(self.eval_partition_path):
-            raise FileNotFoundError(f"Eval partition file not found: {self.eval_partition_path}")
+            raise FileNotFoundError(
+                f"Eval partition file not found: {self.eval_partition_path}"
+            )
         try:
-            base_dataset = DeepFashionPairDataset(self.root_dir, self.eval_partition_path, split="train", n_pairs=self.n_pairs)
+            base_dataset = DeepFashionPairDataset(
+                self.root_dir,
+                self.eval_partition_path,
+                split="train",
+                n_pairs=self.n_pairs,
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to load DeepFashionPairDataset: {e}")
         wrapped_dataset = WrappedPairDataset(base_dataset, self.preprocess)
@@ -154,30 +192,43 @@ class DeepFashionDataModule(pl.LightningDataModule):
         self.val_dataset = Subset(wrapped_dataset, val_indices)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.train_num_workers)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.train_num_workers,
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.val_num_workers)
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.val_num_workers,
+        )
 
 
 class WrappedPairDataset(torch.utils.data.Dataset):
     """
     Dataset wrapper that applies preprocessing to image pairs.
     """
+
     def __init__(self, base_dataset, preprocess):
         self.base = base_dataset
         self.preprocess = preprocess
+
     def __len__(self):
         return len(self.base)
+
     def __getitem__(self, idx):
         img_a, img_b, label = self.base[idx]
         img_a = self.preprocess(img_a)
         img_b = self.preprocess(img_b)
         # Ensure only image tensors are returned
         if isinstance(img_a, dict):
-            img_a = img_a['pixel_values'].squeeze(0)
+            img_a = img_a["pixel_values"].squeeze(0)
         if isinstance(img_b, dict):
-            img_b = img_b['pixel_values'].squeeze(0)
+            img_b = img_b["pixel_values"].squeeze(0)
         return img_a, img_b, label
 
 
@@ -207,18 +258,19 @@ if __name__ == "__main__":
     root_dir = "data/In-shop Clothes Retrieval Benchmark"
     eval_partition_path = os.path.join(root_dir, "Eval", "list_eval_partition.txt")
     # You can set worker counts here, e.g. train_num_workers=os.cpu_count(), val_num_workers=max(1, os.cpu_count()//2)
-    data_module = DeepFashionDataModule(root_dir, eval_partition_path, train_num_workers=0, val_num_workers=0)
+    data_module = DeepFashionDataModule(
+        root_dir, eval_partition_path, train_num_workers=0, val_num_workers=0
+    )
 
     # Set up TensorBoard logger
     tb_logger = TensorBoardLogger(
-        save_dir="models/clip_vit_lora_lightning/tb_logs",
-        name="clip_lora_lightning"
+        save_dir="models/clip_vit_lora_lightning/tb_logs", name="clip_lora_lightning"
     )
     trainer = pl.Trainer(
         max_epochs=3,
         log_every_n_steps=10,
         default_root_dir="models/clip_vit_lora_lightning",
-        logger=tb_logger
+        logger=tb_logger,
     )
     trainer.fit(model, datamodule=data_module)
 
